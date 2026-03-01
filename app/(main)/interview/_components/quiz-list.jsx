@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import QuizResult from "./quiz-result";
 
-export default function QuizList({ assessments }) {
+export default function QuizList({ assessments = [] }) {
   const router = useRouter();
   const [selectedQuiz, setSelectedQuiz] = useState(null);
 
@@ -36,56 +36,78 @@ export default function QuizList({ assessments }) {
                 Review your past quiz performance
               </CardDescription>
             </div>
+
             <Button onClick={() => router.push("/interview/mock")}>
               Start New Quiz
             </Button>
           </div>
         </CardHeader>
+
         <CardContent>
           <div className="space-y-4">
-            {assessments?.map((assessment, i) => (
-              <Card
-                key={assessment.id}
-                className="cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => setSelectedQuiz(assessment)}
-              >
-                <CardHeader>
-                  <CardTitle className="gradient-title text-2xl">
-                    Quiz {i + 1}
-                  </CardTitle>
-                  <CardDescription className="flex justify-between w-full">
-                    <div>Score: {assessment.quizScore.toFixed(1)}%</div>
-                    <div>
-                      {format(
-                        new Date(assessment.createdAt),
-                        "MMMM dd, yyyy HH:mm"
-                      )}
-                    </div>
-                  </CardDescription>
-                </CardHeader>
-                {assessment.improvementTip && (
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      {assessment.improvementTip}
-                    </p>
-                  </CardContent>
-                )}
-              </Card>
-            ))}
+            {assessments.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                No quizzes found.
+              </p>
+            )}
+
+            {assessments.map((assessment, i) => {
+              const safeScore = Number(assessment?.quizScore) || 0;
+
+              const formattedDate = assessment?.createdAt
+                ? format(
+                    new Date(assessment.createdAt),
+                    "MMMM dd, yyyy HH:mm"
+                  )
+                : "N/A";
+
+              return (
+                <Card
+                  key={assessment?.id || i}
+                  className="cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={() => setSelectedQuiz(assessment)}
+                >
+                  <CardHeader>
+                    <CardTitle className="gradient-title text-2xl">
+                      Quiz {i + 1}
+                    </CardTitle>
+
+                    <CardDescription className="flex justify-between w-full">
+                      <div>Score: {safeScore.toFixed(1)}%</div>
+                      <div>{formattedDate}</div>
+                    </CardDescription>
+                  </CardHeader>
+
+                  {assessment?.improvementTip && (
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        {assessment.improvementTip}
+                      </p>
+                    </CardContent>
+                  )}
+                </Card>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
 
-      <Dialog open={!!selectedQuiz} onOpenChange={() => setSelectedQuiz(null)}>
+      <Dialog
+        open={!!selectedQuiz}
+        onOpenChange={() => setSelectedQuiz(null)}
+      >
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle></DialogTitle>
+            <DialogTitle>Quiz Result</DialogTitle>
           </DialogHeader>
-          <QuizResult
-            result={selectedQuiz}
-            hideStartNew
-            onStartNew={() => router.push("/interview/mock")}
-          />
+
+          {selectedQuiz && (
+            <QuizResult
+              result={selectedQuiz}
+              hideStartNew
+              onStartNew={() => router.push("/interview/mock")}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </>

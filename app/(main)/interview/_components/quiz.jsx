@@ -35,7 +35,7 @@ export default function Quiz() {
     setData: setResultData,
   } = useFetch(saveQuizResult);
 
-  // Prepare answers array once quiz data arrives
+  /* ✅ Prepare answers safely */
   useEffect(() => {
     if (Array.isArray(quizData) && quizData.length > 0) {
       setAnswers(new Array(quizData.length).fill(null));
@@ -44,24 +44,15 @@ export default function Quiz() {
   }, [quizData]);
 
   const handleAnswer = (answer) => {
-    const newAnswers = [...answers];
-    newAnswers[currentQuestion] = answer;
-    setAnswers(newAnswers);
-  };
-
-  const handleNext = () => {
-    if (!quizData) return;
-
-    if (currentQuestion < quizData.length - 1) {
-      setCurrentQuestion((prev) => prev + 1);
-      setShowExplanation(false);
-    } else {
-      finishQuiz();
-    }
+    setAnswers((prev) => {
+      const updated = [...prev];
+      updated[currentQuestion] = answer;
+      return updated;
+    });
   };
 
   const calculateScore = () => {
-    if (!quizData) return 0;
+    if (!Array.isArray(quizData) || quizData.length === 0) return 0;
 
     let correct = 0;
     answers.forEach((answer, index) => {
@@ -74,12 +65,26 @@ export default function Quiz() {
   };
 
   const finishQuiz = async () => {
+    if (!Array.isArray(quizData) || quizData.length === 0) return;
+
     const score = calculateScore();
+
     try {
       await saveQuizResultFn(quizData, answers, score);
       toast.success("Quiz completed!");
     } catch (error) {
-      toast.error(error.message || "Failed to save quiz results");
+      toast.error(error?.message || "Failed to save quiz results");
+    }
+  };
+
+  const handleNext = () => {
+    if (!Array.isArray(quizData)) return;
+
+    if (currentQuestion < quizData.length - 1) {
+      setCurrentQuestion((prev) => prev + 1);
+      setShowExplanation(false);
+    } else {
+      finishQuiz();
     }
   };
 
@@ -91,12 +96,12 @@ export default function Quiz() {
     generateQuizFn();
   };
 
-  // 🔄 Loading quiz generation
+  /* 🔄 Loading */
   if (generatingQuiz) {
     return <BarLoader className="mt-4" width="100%" color="gray" />;
   }
 
-  // ✅ Show results
+  /* ✅ Show Results */
   if (resultData) {
     return (
       <div className="mx-2">
@@ -105,8 +110,8 @@ export default function Quiz() {
     );
   }
 
-  // 🟢 Before quiz starts
-  if (!quizData) {
+  /* 🟢 Before quiz starts */
+  if (!Array.isArray(quizData)) {
     return (
       <Card className="mx-2">
         <CardHeader>
@@ -126,7 +131,7 @@ export default function Quiz() {
     );
   }
 
-  // 🛡️ CRITICAL SAFETY CHECK (THIS FIXES YOUR ERROR)
+  /* 🛡️ Safety */
   const question = quizData[currentQuestion];
 
   if (!question) {
@@ -142,19 +147,22 @@ export default function Quiz() {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <p className="text-lg font-medium">{question.question}</p>
+        <p className="text-lg font-medium">
+          {question.question || "Question not available"}
+        </p>
 
         <RadioGroup
           onValueChange={handleAnswer}
-          value={answers[currentQuestion]}
+          value={answers[currentQuestion] || ""}
           className="space-y-2"
         >
-          {question.options?.map((option, index) => (
-            <div key={index} className="flex items-center space-x-2">
-              <RadioGroupItem value={option} id={`option-${index}`} />
-              <Label htmlFor={`option-${index}`}>{option}</Label>
-            </div>
-          ))}
+          {Array.isArray(question.options) &&
+            question.options.map((option, index) => (
+              <div key={index} className="flex items-center space-x-2">
+                <RadioGroupItem value={option} id={`option-${index}`} />
+                <Label htmlFor={`option-${index}`}>{option}</Label>
+              </div>
+            ))}
         </RadioGroup>
 
         {showExplanation && (
@@ -183,7 +191,9 @@ export default function Quiz() {
           disabled={!answers[currentQuestion] || savingResult}
           className="ml-auto"
         >
-          {savingResult ? "Saving..." : currentQuestion < quizData.length - 1
+          {savingResult
+            ? "Saving..."
+            : currentQuestion < quizData.length - 1
             ? "Next Question"
             : "Finish Quiz"}
         </Button>
