@@ -25,7 +25,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-import { deleteCoverLetter } from "@/actions/coverLetter"; // ✅ IMPORTANT: match file name exactly
+import { deleteCoverLetter } from "@/actions/cover-letter"; // ✅ IMPORTANT: match file name exactly
 
 export default function CoverLetterList({ coverLetters }) {
   const router = useRouter();
