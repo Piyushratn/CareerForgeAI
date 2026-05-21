@@ -72,7 +72,7 @@ User → Frontend (Next.js) → Backend (Node.js) →
 
 ## 📸 Screenshots
 
-> ![Home Page](images/screenshot1.png)
+> ![Home Page](./screenshot1.png)
 
 ---
 
